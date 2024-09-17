@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clicker de Biscuits</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0e0d0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #game-container {
+            display: flex;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        #left-panel {
+            width: 300px;
+            text-align: center;
+        }
+        #right-panel {
+            width: 300px;
+            border-left: 1px solid #ccc;
+            padding-left: 20px;
+        }
+        #cookie {
+            width: 200px;
+            height: 200px;
+            background-image: url('https://cdn-icons-png.flaticon.com/512/541/541732.png');
+            background-size: cover;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        #cookie:active {
+            transform: scale(0.95);
+        }
+        .upgrade {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .upgrade:hover {
+            background-color: #e0e0e0;
+        }
+        .disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="left-panel">
+            <h1>Clicker de Biscuits</h1>
+            <p>Biscuits : <span id="cookie-count">0</span></p>
+            <p>Par seconde : <span id="cookies-per-second">0</span></p>
+            <div id="cookie"></div>
+        </div>
+        <div id="right-panel">
+            <h2>Améliorations</h2>
+            <div id="upgrades"></div>
+        </div>
+    </div>
+
+    <script>
+        let cookies = 0;
+        let cookiesPerSecond = 0;
+        const upgrades = [
+            { name: "Curseur", base_cost: 15, base_cps: 0.1, count: 0 },
+            { name: "Grand-mère", base_cost: 100, base_cps: 1, count: 0 },
+            { name: "Ferme", base_cost: 1100, base_cps: 8, count: 0 },
+            { name: "Mine", base_cost: 12000, base_cps: 47, count: 0 },
+            { name: "Usine", base_cost: 130000, base_cps: 260, count: 0 },
+        ];
+
+        const cookieElement = document.getElementById('cookie');
+        const cookieCountElement = document.getElementById('cookie-count');
+        const cookiesPerSecondElement = document.getElementById('cookies-per-second');
+        const upgradesElement = document.getElementById('upgrades');
+
+        cookieElement.addEventListener('click', () => {
+            cookies++;
+            updateCookieCount();
+        });
+
+        function updateCookieCount() {
+            cookieCountElement.textContent = Math.floor(cookies);
+        }
+
+        function updateCookiesPerSecond() {
+            cookiesPerSecond = upgrades.reduce((total, upgrade) => total + upgrade.base_cps * upgrade.count, 0);
+            cookiesPerSecondElement.textContent = cookiesPerSecond.toFixed(1);
+        }
+
+        function createUpgradeElements() {
+            upgrades.forEach((upgrade, index) => {
+                const upgradeElement = document.createElement('div');
+                upgradeElement.className = 'upgrade';
+                upgradeElement.innerHTML = `
+                    <strong>${upgrade.name}</strong><br>
+                    Coût : <span class="cost">${upgrade.base_cost}</span><br>
+                    Nombre : <span class="count">${upgrade.count}</span>
+                `;
+                upgradeElement.addEventListener('click', () => buyUpgrade(index));
+                upgradesElement.appendChild(upgradeElement);
+            });
+        }
+
+        function buyUpgrade(index) {
+            const upgrade = upgrades[index];
+            const cost = Math.floor(upgrade.base_cost * Math.pow(1.15, upgrade.count));
+            if (cookies >= cost) {
+                cookies -= cost;
+                upgrade.count++;
+                updateCookieCount();
+                updateCookiesPerSecond();
+                updateUpgradeElements();
+            }
+        }
+
+        function updateUpgradeElements() {
+            const upgradeElements = document.querySelectorAll('.upgrade');
+            upgrades.forEach((upgrade, index) => {
+                const element = upgradeElements[index];
+                const cost = Math.floor(upgrade.base_cost * Math.pow(1.15, upgrade.count));
+                element.querySelector('.cost').textContent = cost;
+                element.querySelector('.count').textContent = upgrade.count;
+                element.classList.toggle('disabled', cookies < cost);
+            });
+        }
+
+        function gameLoop() {
+            cookies += cookiesPerSecond / 10;
+            updateCookieCount();
+            updateUpgradeElements();
+        }
+
+        createUpgradeElements();
+        setInterval(gameLoop, 100);
+    </script>
+</body>
+</html>
